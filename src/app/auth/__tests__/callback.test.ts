@@ -37,16 +37,19 @@ describe("GET /auth/callback", () => {
   });
 
   function createMockRequest(url: string) {
-    const parsedUrl = new URL(url);
     return {
-      nextUrl: parsedUrl,
+      url,
+      cookies: {
+        getAll: () => [],
+        set: vi.fn(),
+      },
     };
   }
 
   it("codeがある場合セッション交換してdashboardにリダイレクトする", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
 
-    const { GET } = await import("@/app/auth/callback/route");
+    const { GET } = await import("@/app/api/auth/callback/route");
     const request = createMockRequest("http://localhost/auth/callback?code=test-code");
 
     const response = await GET(request as any);
@@ -57,7 +60,7 @@ describe("GET /auth/callback", () => {
   });
 
   it("codeがない場合loginにリダイレクトする", async () => {
-    const { GET } = await import("@/app/auth/callback/route");
+    const { GET } = await import("@/app/api/auth/callback/route");
     const request = createMockRequest("http://localhost/auth/callback");
 
     const response = await GET(request as any);
@@ -72,7 +75,7 @@ describe("GET /auth/callback", () => {
       error: { message: "invalid code" },
     });
 
-    const { GET } = await import("@/app/auth/callback/route");
+    const { GET } = await import("@/app/api/auth/callback/route");
     const request = createMockRequest("http://localhost/auth/callback?code=bad-code");
 
     const response = await GET(request as any);
