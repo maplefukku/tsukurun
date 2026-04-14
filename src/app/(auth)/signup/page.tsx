@@ -22,9 +22,16 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
+    const origin = window.location.origin;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${origin}/api/auth/callback`,
+        data: {
+          display_name: email.split("@")[0],
+        },
+      },
     });
 
     if (error) {
