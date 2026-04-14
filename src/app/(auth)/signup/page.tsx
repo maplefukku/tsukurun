@@ -22,7 +22,7 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -31,6 +31,10 @@ export default function SignupPage() {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    if (data.user) {
+      await supabase.from("profiles").insert({ id: data.user.id });
     }
 
     setSent(true);
@@ -149,7 +153,7 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-10 w-full rounded-xl text-sm font-medium"
+              className="h-12 w-full rounded-full text-sm font-medium"
             >
               {loading ? "作成中..." : "アカウント作成"}
             </Button>

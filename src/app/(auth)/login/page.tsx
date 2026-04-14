@@ -117,7 +117,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-10 w-full rounded-xl text-sm font-medium"
+              className="h-12 w-full rounded-full text-sm font-medium"
             >
               {loading ? "ログイン中..." : "ログイン"}
             </Button>
