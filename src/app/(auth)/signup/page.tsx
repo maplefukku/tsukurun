@@ -33,10 +33,6 @@ export default function SignupPage() {
       return;
     }
 
-    if (data.user) {
-      await supabase.from("profiles").insert({ id: data.user.id });
-    }
-
     setSent(true);
     setLoading(false);
   }
