@@ -3,15 +3,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, ExternalLink, MessageCircle, ArrowRight } from "lucide-react";
 
 const ease = [0.25, 0.46, 0.45, 0.94] as const;
 
-export default function SharePage() {
+function ShareContent() {
+  const searchParams = useSearchParams();
   const [copied, setCopied] = useState(false);
-  const shareUrl = "https://tsukurun.vercel.app/s/abc123";
+  const slug = searchParams.get("slug") ?? "abc123";
+  const shareUrl = `https://tsukurun.vercel.app/s/${slug}`;
 
   function handleCopy() {
     navigator.clipboard.writeText(shareUrl);
@@ -134,5 +138,13 @@ export default function SharePage() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+export default function SharePage() {
+  return (
+    <Suspense>
+      <ShareContent />
+    </Suspense>
   );
 }

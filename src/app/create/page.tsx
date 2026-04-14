@@ -269,7 +269,8 @@ export default function CreatePage() {
           try {
             const data = JSON.parse(payload) as
               | { type: "text"; content: string }
-              | { type: "template"; templateId: string };
+              | { type: "template"; templateId: string }
+              | { type: "suggestions"; suggestions: Array<{ id: string; title: string; description: string }> };
 
             if (data.type === "text") {
               assistantContent += data.content;
@@ -289,6 +290,21 @@ export default function CreatePage() {
                     : m,
                 ),
               );
+            } else if (data.type === "suggestions" && data.suggestions.length > 0) {
+              // Use the first suggestion's id as the template
+              const firstSuggestion = data.suggestions[0];
+              // Try to match suggestion id to a known template
+              const template = getTemplateById(firstSuggestion.id);
+              assistantTemplateId = template ? template.id : undefined;
+              if (assistantTemplateId) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? { ...m, templateId: assistantTemplateId }
+                      : m,
+                  ),
+                );
+              }
             }
           } catch {
             // Ignore malformed JSON chunks

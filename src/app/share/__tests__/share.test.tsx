@@ -6,6 +6,11 @@ vi.mock("next/link", () => ({
   default: ({ children, ...props }: any) => <a {...props}>{children}</a>,
 }));
 
+// next/navigation モック
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 // framer-motion モック（アニメーションを無効化）
 vi.mock("framer-motion", () => ({
   motion: {
