@@ -93,20 +93,20 @@ describe("POST /api/generate", () => {
       choices: [
         {
           message: {
-            content: '```json\n{"name": "太郎", "bio": "エンジニアです"}\n```',
+            content: '```json\n{"title": "太郎のメニュー", "items": "<div>カレー 800円</div>"}\n```',
           },
         },
       ],
     });
 
     const res = await POST(
-      createRequest({ templateId: "profile-card", config: "太郎のプロフィール" }) as any,
+      createRequest({ templateId: "menu-board", config: "太郎のメニュー" }) as any,
     );
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.html).toContain("太郎");
-    expect(data.html).toContain("エンジニアです");
+    expect(data.html).toContain("太郎のメニュー");
+    expect(data.html).toContain("カレー 800円");
   });
 
   it("returns 500 when GLM returns unparseable content", async () => {

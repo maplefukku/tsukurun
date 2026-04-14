@@ -45,10 +45,10 @@ describe("getTemplateById", () => {
 
 describe("getTemplatesByCategory", () => {
   it("returns templates filtered by category", () => {
-    const bizTemplates = getTemplatesByCategory("ビジネス");
-    expect(bizTemplates.length).toBeGreaterThan(0);
-    for (const t of bizTemplates) {
-      expect(t.category).toBe("ビジネス");
+    const diagTemplates = getTemplatesByCategory("診断");
+    expect(diagTemplates.length).toBeGreaterThan(0);
+    for (const t of diagTemplates) {
+      expect(t.category).toBe("診断");
     }
   });
 
@@ -57,8 +57,7 @@ describe("getTemplatesByCategory", () => {
   });
 
   it("returns multiple templates when category has many", () => {
-    const bizTemplates = getTemplatesByCategory("ビジネス");
-    // menu-board and price-table are both ビジネス
-    expect(bizTemplates.length).toBeGreaterThanOrEqual(2);
+    const diagTemplates = getTemplatesByCategory("診断");
+    expect(diagTemplates.length).toBeGreaterThanOrEqual(2);
   });
 });

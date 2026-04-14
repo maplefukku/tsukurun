@@ -12,12 +12,12 @@ describe("テンプレートレジストリ", () => {
     "todo-list",
     "countdown",
     "poll",
-    "profile-card",
-    "price-table",
-    "flashcard",
-    "link-tree",
-    "event-page",
     "calculator",
+    "personality-quiz",
+    "love-compatibility",
+    "skill-check",
+    "mood-analyzer",
+    "fortune",
   ];
 
   const requiredFields: (keyof Template)[] = [
@@ -67,19 +67,16 @@ describe("テンプレートレジストリ", () => {
 
   describe("getTemplatesByCategory", () => {
     it("カテゴリでテンプレートを絞り込める", () => {
-      const business = getTemplatesByCategory("ビジネス");
-      expect(business.length).toBeGreaterThan(0);
-      for (const t of business) {
-        expect(t.category).toBe("ビジネス");
+      const diagnostic = getTemplatesByCategory("診断");
+      expect(diagnostic.length).toBeGreaterThan(0);
+      for (const t of diagnostic) {
+        expect(t.category).toBe("診断");
       }
     });
 
-    it("ビジネスカテゴリに2件含まれる", () => {
-      const business = getTemplatesByCategory("ビジネス");
-      expect(business).toHaveLength(2);
-      const ids = business.map((t) => t.id);
-      expect(ids).toContain("menu-board");
-      expect(ids).toContain("price-table");
+    it("診断カテゴリに5件含まれる", () => {
+      const diagnostic = getTemplatesByCategory("診断");
+      expect(diagnostic).toHaveLength(5);
     });
 
     it("存在しないカテゴリで空配列を返す", () => {

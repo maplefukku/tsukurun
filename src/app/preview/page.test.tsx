@@ -214,8 +214,8 @@ describe("PreviewPage", () => {
   });
 
   it("calls /api/generate with the correct templateId", async () => {
-    mockSearchParams = new URLSearchParams("template=profile-card");
-    mockFetchSuccess("<html>profile</html>");
+    mockSearchParams = new URLSearchParams("template=personality-quiz");
+    mockFetchSuccess("<html>quiz</html>");
 
     render(<PreviewPage />);
 
@@ -223,7 +223,7 @@ describe("PreviewPage", () => {
       "/api/generate",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ templateId: "profile-card" }),
+        body: JSON.stringify({ templateId: "personality-quiz" }),
       }),
     );
   });

@@ -2,6 +2,12 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("framer-motion", () => ({
   motion: new Proxy(
     {},
@@ -28,6 +34,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 import { ExamplesSection } from "./examples-section";
+import { templates } from "@/lib/templates/registry";
 
 describe("ExamplesSection", () => {
   it("renders without crashing", () => {
@@ -36,32 +43,27 @@ describe("ExamplesSection", () => {
 
   it("displays the section heading", () => {
     render(<ExamplesSection />);
-    expect(screen.getByText("みんなが作ったもの")).toBeInTheDocument();
+    expect(screen.getByText("テンプレートから作る")).toBeInTheDocument();
   });
 
-  it("renders all template cards", () => {
+  it("renders all template cards from registry", () => {
     render(<ExamplesSection />);
-    expect(screen.getByText("メニューボード")).toBeInTheDocument();
-    expect(screen.getByText("やることリスト")).toBeInTheDocument();
-    expect(screen.getByText("カウントダウン")).toBeInTheDocument();
-    expect(screen.getByText("投票アンケート")).toBeInTheDocument();
-    expect(screen.getByText("プロフィールカード")).toBeInTheDocument();
-    expect(screen.getByText("割り勘カリキュレーター")).toBeInTheDocument();
-    expect(screen.getByText("読書メモ")).toBeInTheDocument();
+    for (const t of templates) {
+      expect(screen.getByText(t.name)).toBeInTheDocument();
+    }
   });
 
   it("renders template descriptions", () => {
     render(<ExamplesSection />);
     expect(
-      screen.getByText("お店のメニューをおしゃれに表示"),
+      screen.getByText(templates[0].description),
     ).toBeInTheDocument();
-    expect(screen.getByText("タスクをサクサク管理")).toBeInTheDocument();
   });
 
   it("renders emoji role images with aria-labels", () => {
     render(<ExamplesSection />);
     const emojiImages = screen.getAllByRole("img");
-    expect(emojiImages.length).toBe(7);
-    expect(emojiImages[0]).toHaveAttribute("aria-label", "メニューボード");
+    expect(emojiImages.length).toBe(templates.length);
+    expect(emojiImages[0]).toHaveAttribute("aria-label", templates[0].name);
   });
 });
