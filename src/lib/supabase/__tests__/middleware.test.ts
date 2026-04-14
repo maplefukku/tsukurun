@@ -34,6 +34,7 @@ describe("updateSession (middleware)", () => {
     const { updateSession } = await import("../middleware");
 
     const mockRequest = {
+      nextUrl: new URL("http://localhost/"),
       cookies: {
         getAll: () => [{ name: "sb-test", value: "token" }],
         set: vi.fn(),
@@ -49,6 +50,7 @@ describe("updateSession (middleware)", () => {
     const { updateSession } = await import("../middleware");
 
     const mockRequest = {
+      nextUrl: new URL("http://localhost/"),
       cookies: {
         getAll: () => [],
         set: vi.fn(),

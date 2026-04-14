@@ -24,6 +24,7 @@ export interface Database {
           line_user_id?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       templates: {
         Row: {
@@ -51,6 +52,7 @@ export interface Database {
           html_template?: string;
           base_config?: Record<string, unknown>;
         };
+        Relationships: [];
       };
       projects: {
         Row: {
@@ -86,6 +88,22 @@ export interface Database {
           published_slug?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "projects_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "templates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "projects_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       conversations: {
         Row: {
@@ -101,6 +119,15 @@ export interface Database {
         Update: {
           project_id?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       messages: {
         Row: {
@@ -121,6 +148,15 @@ export interface Database {
           role?: "user" | "assistant";
           content?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       published_sites: {
         Row: {
@@ -146,7 +182,20 @@ export interface Database {
           view_count?: number;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "published_sites_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
