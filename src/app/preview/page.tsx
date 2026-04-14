@@ -31,23 +31,68 @@ function SkeletonLine({ width, delay }: { width: string; delay: number }) {
 
 function PreviewContent() {
   const searchParams = useSearchParams();
-  const template = searchParams.get("template");
+  const templateId = searchParams.get("template") ?? searchParams.get("templateId");
   const [isLoading, setIsLoading] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
+  const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!templateId) {
+      setError("テンプレートが指定されていないよ");
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function generate() {
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "生成に失敗したよ");
+          return;
+        }
+        setGeneratedHtml(data.html);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") {
+          setError("通信エラーが発生したよ");
+        }
+      }
+    }
+
+    generate();
+    return () => controller.abort();
+  }, [templateId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setStepIndex((prev) => {
         if (prev >= loadingSteps.length - 1) {
           clearInterval(interval);
-          setTimeout(() => setIsLoading(false), 800);
+          if (generatedHtml || error) {
+            setTimeout(() => setIsLoading(false), 800);
+          }
           return prev;
         }
         return prev + 1;
       });
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [generatedHtml, error]);
+
+  useEffect(() => {
+    if ((generatedHtml || error) && stepIndex >= loadingSteps.length - 1) {
+      const timer = setTimeout(() => setIsLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [generatedHtml, error, stepIndex]);
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8">
@@ -88,19 +133,25 @@ function PreviewContent() {
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="flex flex-col items-center"
           >
-            <div className="w-full overflow-hidden rounded-2xl border border-border/50 shadow-sm">
-              <div className="flex h-8 items-center gap-1.5 border-b border-border/50 bg-muted/50 px-3">
-                <span className="size-2.5 rounded-full bg-muted-foreground/20" />
-                <span className="size-2.5 rounded-full bg-muted-foreground/20" />
-                <span className="size-2.5 rounded-full bg-muted-foreground/20" />
+            {error ? (
+              <div className="w-full rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
-              <iframe
-                src="about:blank"
-                title="プレビュー"
-                className="h-80 w-full bg-background"
-                sandbox="allow-scripts"
-              />
-            </div>
+            ) : (
+              <div className="w-full overflow-hidden rounded-2xl border border-border/50 shadow-sm">
+                <div className="flex h-8 items-center gap-1.5 border-b border-border/50 bg-muted/50 px-3">
+                  <span className="size-2.5 rounded-full bg-muted-foreground/20" />
+                  <span className="size-2.5 rounded-full bg-muted-foreground/20" />
+                  <span className="size-2.5 rounded-full bg-muted-foreground/20" />
+                </div>
+                <iframe
+                  srcDoc={generatedHtml ?? undefined}
+                  title="プレビュー"
+                  className="h-80 w-full bg-background"
+                  sandbox="allow-scripts"
+                />
+              </div>
+            )}
 
             <div className="mt-8 flex w-full gap-3">
               <Button

@@ -31,9 +31,11 @@ vi.mock("next/link", () => ({
     React.createElement("a", { href, ...props }, children),
 }));
 
+let mockSearchParams = new URLSearchParams();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams,
   usePathname: () => "/preview",
 }));
 
@@ -43,13 +45,30 @@ vi.mock("@/components/header", () => ({
 
 import PreviewPage from "./page";
 
+function mockFetchSuccess(html: string) {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ html }),
+  });
+}
+
+function mockFetchError(error: string, status = 500) {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: false,
+    status,
+    json: () => Promise.resolve({ error }),
+  });
+}
+
 describe("PreviewPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    mockSearchParams = new URLSearchParams();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("renders without crashing", () => {
@@ -61,13 +80,25 @@ describe("PreviewPage", () => {
     expect(screen.getByTestId("header")).toBeInTheDocument();
   });
 
-  it("shows the first loading step initially", () => {
+  it("shows error when no templateId is provided", async () => {
+    render(<PreviewPage />);
+    expect(
+      screen.getByText("テンプレートが指定されていないよ"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the first loading step when templateId is provided", async () => {
+    mockSearchParams = new URLSearchParams("template=countdown");
+    mockFetchSuccess("<html>test</html>");
     render(<PreviewPage />);
     expect(screen.getByText("アイデアを整理してるよ...")).toBeInTheDocument();
   });
 
-  it("advances through loading steps on interval", () => {
+  it("advances through loading steps on interval", async () => {
+    mockSearchParams = new URLSearchParams("template=countdown");
+    mockFetchSuccess("<html>test</html>");
     render(<PreviewPage />);
+
     expect(screen.getByText("アイデアを整理してるよ...")).toBeInTheDocument();
 
     act(() => {
@@ -81,34 +112,119 @@ describe("PreviewPage", () => {
     expect(screen.getByText("コードを書いてるよ...")).toBeInTheDocument();
   });
 
-  it("shows preview content after loading completes", () => {
+  it("shows preview with generated HTML after loading completes", async () => {
+    mockSearchParams = new URLSearchParams("template=countdown");
+    mockFetchSuccess("<html><body>Generated Content</body></html>");
+
     render(<PreviewPage />);
 
-    // Interval fires at 1500 (0->1), 3000 (1->2), 4500 (2->3), 6000 (3>=3: clearInterval + setTimeout(800))
-    // setTimeout fires at 6800ms total
-    act(() => { vi.advanceTimersByTime(1500); }); // step 0 -> 1
-    act(() => { vi.advanceTimersByTime(1500); }); // step 1 -> 2
-    act(() => { vi.advanceTimersByTime(1500); }); // step 2 -> 3
-    act(() => { vi.advanceTimersByTime(1500); }); // step 3 >= 3: clearInterval, setTimeout(800)
-    act(() => { vi.advanceTimersByTime(1000); }); // flush the 800ms timeout
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
 
     expect(screen.getByText("友達にシェアする")).toBeInTheDocument();
     expect(screen.getByText("もう少し変えたい")).toBeInTheDocument();
+
+    const iframe = screen.getByTitle("プレビュー") as HTMLIFrameElement;
+    expect(iframe).toBeInTheDocument();
+    expect(iframe.getAttribute("srcdoc")).toContain("Generated Content");
   });
 
-  it("shows share and edit links after loading", () => {
+  it("shows share and edit links after loading", async () => {
+    mockSearchParams = new URLSearchParams("template=calculator");
+    mockFetchSuccess("<html>calc</html>");
+
     render(<PreviewPage />);
 
-    act(() => { vi.advanceTimersByTime(1500); });
-    act(() => { vi.advanceTimersByTime(1500); });
-    act(() => { vi.advanceTimersByTime(1500); });
-    act(() => { vi.advanceTimersByTime(1500); });
-    act(() => { vi.advanceTimersByTime(1000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
 
     const shareLink = screen.getByText("友達にシェアする").closest("a");
     expect(shareLink).toHaveAttribute("href", "/share");
 
     const editLink = screen.getByText("もう少し変えたい").closest("a");
     expect(editLink).toHaveAttribute("href", "/create");
+  });
+
+  it("shows error message when API returns an error", async () => {
+    mockSearchParams = new URLSearchParams("template=countdown");
+    mockFetchError("テンプレートが見つからないよ", 404);
+
+    render(<PreviewPage />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(
+      screen.getByText("テンプレートが見つからないよ"),
+    ).toBeInTheDocument();
+  });
+
+  it("supports templateId query parameter", async () => {
+    mockSearchParams = new URLSearchParams("templateId=menu-board");
+    mockFetchSuccess("<html>menu</html>");
+
+    render(<PreviewPage />);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/generate",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ templateId: "menu-board" }),
+      }),
+    );
+  });
+
+  it("calls /api/generate with the correct templateId", async () => {
+    mockSearchParams = new URLSearchParams("template=profile-card");
+    mockFetchSuccess("<html>profile</html>");
+
+    render(<PreviewPage />);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/generate",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ templateId: "profile-card" }),
+      }),
+    );
   });
 });
